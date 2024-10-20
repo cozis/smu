@@ -3,7 +3,7 @@
 
 include config.mk
 
-SRC    = smu.c
+SRC    = smu.c c2html.c
 OBJ    = ${SRC:.c=.o}
 # VALGRIND = valgrind -q --error-exitcode=1
 

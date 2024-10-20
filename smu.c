@@ -12,6 +12,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "c2html.h"
+
 #define LENGTH(x)  sizeof(x)/sizeof(x[0])
 #define ADDC(b,i)  if (i % BUFSIZ == 0) { b = realloc(b, (i + BUFSIZ) * sizeof(char)); if (!b) eprint("Malloc failed."); } b[i]
 
@@ -187,16 +189,35 @@ docodefence(const char *begin, const char *end, int newblock) {
 	if (!p)
 		stop = end;
 
+	int is_c = 0;
+
 	/* Print output */
 	if (lang_start == lang_stop) {
 		fputs("<pre><code>", stdout);
 	} else {
-		fputs("<pre><code class=\"language-", stdout);
-		hprint(lang_start, lang_stop);
-		fputs("\">", stdout);
+		if (lang_stop - lang_start == 2 && *lang_start == 'c')
+			is_c = 1;
+		else {
+			fputs("<pre><code class=\"language-", stdout);
+			hprint(lang_start, lang_stop);
+			fputs("\">", stdout);
+		}
 	}
-	hprint(start, stop);
-	fputs("</code></pre>\n", stdout);
+
+	if (is_c) {
+		const char *error;
+		long  c_as_html_len;
+		char *c_as_html = c2html(start, stop - start, "c2h-", &c_as_html_len, &error);
+		if (c_as_html == NULL)
+			hprint(error, error + strlen(error));
+		else {
+			fwrite(c_as_html, 1, c_as_html_len, stdout);
+			free(c_as_html);
+		}
+	} else {
+		hprint(start, stop);
+		fputs("</code></pre>\n", stdout);
+	}
 	return -(stop - begin + l);
 }
 
